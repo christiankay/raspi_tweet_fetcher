@@ -184,6 +184,7 @@ class get_tweets:
             panda_dict =  pd.DataFrame.from_dict(com_dict)   
             panda_dict['time'] = pd.to_datetime(panda_dict['time'])
             panda_dict.rename(columns={'body': 'Tweets'}, inplace=True)
+            panda_dict.rename(columns={'id': 'ID'}, inplace=True)
             ## extract sentiment
             tlen = pd.Series(data=panda_dict['basic_sentiment'].values, index=panda_dict['time'])
             bull = tlen.loc[tlen[:].isin(['Bullish'])]
@@ -301,8 +302,7 @@ class get_tweets:
             print('------------------------------------------------')
             print('------------------------------------------------')
             print('------------------------------------------------')
-            print("\n")
-            print("\n")
+
             
             
     def save_tweets_to_hdf(self, day):
@@ -336,97 +336,7 @@ class get_tweets:
         
         return new_data
         
-def main():                
-    ### init 
-    get_Twitter_data = get_tweets()
-    ### fetch data based on query word
-    get_Twitter_data.fetch_tweets(query='BITCOIN', count=100, pages=1)
-    
 
-    data = get_Twitter_data.data
-    
-    
-    
-        
-    
-    # We extract the tweet with more FAVs and more RTs:
-    
-#    fav_max = np.max(data['Likes'])
-#    rt_max  = np.max(data['RTs'])
-##    
-#    fav = data[data.Likes == fav_max].index[0]
-#    rt  = data[data.RTs == rt_max].index[0]
-#    
-#    # Max FAVs:
-#    print ("------------------------------------------------------------")
-#    print("The tweet with more likes is: \n{}".format(data['Tweets'][fav]))
-#    print("Number of likes: {}".format(fav_max))
-#    print("{} characters.\n".format(data['len'][fav]))
-#    print ("------------------------------------------------------------")
-#    
-#    # Max RTs:
-#    print ("------------------------------------------------------------")
-#    print("The tweet with more retweets is: \n{}".format(data['Tweets'][rt]))
-#    print("Number of retweets: {}".format(rt_max))
-#    print("{} characters.\n".format(data['len'][rt]))
-#    print ("------------------------------------------------------------")
-#    
-#    #####
-#    # We extract the mean of lenghts:
-#    
-#    mean = np.mean(data['len'])
-#    print ("------------------------------------------------------------")
-#    print("The lenght's average in tweets: {}".format(mean))
-#    print ("------------------------------------------------------------")
-    
-    
-        ### delete duplicates data from CSV
-   # get_Twitter_data.read_and_clean_data_from_csv(query='BITCOIN')         
-    
-    ## We display the updated dataframe with the new column:
-    #print(data.head(10))   
-        
-     #We construct lists with classified tweets:
-    #
-    #pos_tweets = [ tweet for index, tweet in enumerate(data['Tweets']) if data['SA'][index] > 0]
-    #neu_tweets = [ tweet for index, tweet in enumerate(data['Tweets']) if data['SA'][index] == 0]
-    #neg_tweets = [ tweet for index, tweet in enumerate(data['Tweets']) if data['SA'][index] < 0]
-    #
-    ## We print percentages:
-    #
-    #print("Percentage of positive tweets: {}%".format(len(pos_tweets)*100/len(data['Tweets'])))
-    #print("Percentage of neutral tweets: {}%".format(len(neu_tweets)*100/len(data['Tweets'])))
-    #print("Percentage de negative tweets: {}%".format(len(neg_tweets)*100/len(data['Tweets'])))                  
-        
-if __name__ == "__main__":
-    loop = True  
-    while loop:
-
-        try:
-            print("Start main()..")
-            print (time.strftime("%H:%M:%S"))
-            main()
-            
-            print("\n")
-            print("Waiting...")
-            print (time.strftime("%H:%M:%S"))
-            print("\n")
-            print("\n")
-            '''
-            15 Minute Windows
-            Rate limits are divided into 15 minute intervals. All endpoints require authentication, so there is no concept of unauthenticated calls and rate limits.
-            
-            There are two initial buckets available for GET requests: 15 calls every 15 minutes, and 180 calls every 15 minutes.
-            '''
-            
-            time.sleep(60*15+10)
-        except KeyboardInterrupt:
-            print (time.strftime("%H:%M:%S"))
-            confirm = input('Enter "yes" to cancel or "no" to keep running [yes/no]:').strip().lower()
-            if confirm == 'yes':
-                loop = False
-            else:
-                loop = True
   
     
 

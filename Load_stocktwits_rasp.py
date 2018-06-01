@@ -285,7 +285,7 @@ class get_tweets:
             
             
             
-    def clean_data_from_csv(self, query):
+    def read_and_clean_data_from_csv(self, query):
         self.query = query
         data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)
         print("Data set before cleaning: " + str(data.shape)) 
@@ -309,9 +309,9 @@ def main():
     ### fetch data based on query word
     get_tweet_data.fetch_stocktwits(query='BTC.X')
     ### delete duplicates data from CSV
-  #  get_tweet_data.clean_data_from_csv(query='stocktwits_BTC.X')                 
+    get_tweet_data.read_and_clean_data_from_csv(query='stocktwits_BTC.X')                 
      
- #   get_tweet_data.save_tweets_to_hdf('test')
+  #  get_tweet_data.save_tweets_to_hdf('test')
 
 
 import time
