@@ -9,19 +9,16 @@ import tweepy
 
 import pandas as pd
 import numpy as np
-from textblob import TextBlob
-
-import os
-
-from datetime import timedelta
-import dateutil.parser
-
-## stocktwit api
+#from textblob import TextBlob
 import api as twitapi
+import os
+import time  
+import dateutil.parser
 
 class get_tweets:
     
     def __init__(self, 
+                 folder='TweetDat/',
                  consumer_key = 'edxIg10mLXYvXfFy6YcL9Ljlf',
                  consumer_secret= 'a6ulFtT7UAKxRfrqPb4KKklhTtaeBhpjXFsiz31WnfmAHAxLut',
                  access_token='55509426-JHSDeISdoOgc3GZfLmOhJix9gGB9yKexccVKuA38X',
@@ -32,22 +29,22 @@ class get_tweets:
         self.auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         self.auth.set_access_token(access_token, access_token_secret)
         #Path to store cached currency data
-        self.datPath = 'TweetDat/'
+        self.datPath = folder
         if not os.path.exists(self.datPath):
             os.mkdir(self.datPath)
         self.query = None    
         self.data = None
+        self.encoding = 'utf-8'#"ISO-8859-1"
 
-    def fetch_tweets(self, query='BITCOIN' , count = 100, pages = 1):
+    def fetch_tweets(self, query='BITCOIN' , count = 200, pages = 200):
         
         self.query = 'BITCOIN'
-       # tweet_list = []
+        tweet_list = []
  
-        page_count = 1  
+        page_count = 0  
 
         api = tweepy.API(self.auth)
-
-
+        
         
         print ("---------------Start fetching new twitter data----------------------")
         
@@ -68,45 +65,51 @@ class get_tweets:
                     
                     for i in range(len(tweets)):
                         
-                    #    tweet_list.append(tweets[i].text)          
+                        tweet_list.append(tweets[i].text)          
                     
                     # We create a pandas dataframe as follows:    
                     ### panda frames    
                         
-                        self.data = pd.DataFrame(data=[tweet.text for tweet in tweets], columns=['Tweets'])
-                        self.data['len']  = np.array([len(tweet.text) for tweet in tweets])
-                        self.data['ID']   = np.array([tweet.id for tweet in tweets])
-                        self.data['Date'] = np.array([tweet.created_at for tweet in tweets])
-                        self.data['Source'] = np.array([tweet.source for tweet in tweets])
-                        self.data['Likes']  = np.array([tweet.favorite_count for tweet in tweets])
-                        self.data['RTs']    = np.array([tweet.retweet_count for tweet in tweets])
+                    self.data = pd.DataFrame(data=[tweet.text for tweet in tweets], columns=['Tweets'])
+                    self.data['len']  = np.array([len(tweet.text) for tweet in tweets])
+                    self.data['ID']   = np.array([tweet.id for tweet in tweets])
+                    self.data['Date'] = np.array([tweet.created_at for tweet in tweets])
+                    self.data['Source'] = np.array([tweet.source for tweet in tweets])
+                    self.data['Likes']  = np.array([tweet.favorite_count for tweet in tweets])
+                    self.data['RTs']    = np.array([tweet.retweet_count for tweet in tweets])
+                    
+                    self.data['name'] = np.array([tweet.user.name for tweet in tweets])
+                    self.data['location'] = np.array([tweet.user.location for tweet in tweets])
+                          
+                    self.data['friends_count'] = np.array([tweet.user.friends_count for tweet in tweets])
+                    self.data['favourites_count'] = np.array([tweet.user.favourites_count for tweet in tweets])
+                 
+                    self.data['followers_count'] = np.array([tweet.user.followers_count for tweet in tweets])
+                                    
+                    
+                    # stop after retrieving 200 pages  
+                    
+                    ### save data to csv
+                    
+                       
+                    if page_count > pages:  
+                            break   
+                         
                         
-                        self.data['name'] = np.array([tweet.user.name for tweet in tweets])
-                        self.data['location'] = np.array([tweet.user.location for tweet in tweets])
-                              
-                        self.data['friends_count'] = np.array([tweet.user.friends_count for tweet in tweets])
-                        self.data['favourites_count'] = np.array([tweet.user.favourites_count for tweet in tweets])
-                     
-                        self.data['followers_count'] = np.array([tweet.user.followers_count for tweet in tweets])
-                                        
-                        
-                        # stop after retrieving 200 pages  
-                        
-                        ### save data to csv
-                        self.save_tweets_to_csv()
-                           
-                        if page_count > pages:  
-                                break   
-                            
                         
         except:
             print("API rate limit reached!")  
-        data = pd.read_csv(self.datPath+'tweets_'+query+'.csv',encoding='utf-8', index_col=None)    
+        try:
+           self.save_tweets_to_csv()
+            
+        except:
+            print('ERROR while saving data')
+        
+        data = pd.read_csv(self.datPath+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None)    
         print ("---------------Data fetching completed!-------------------------") 
         print ("---------------Data set shape: "+ str(data.shape)+ " ----------------------") 
-
-
-
+        
+        
     def fetch_stocktwits(self, query='BTC.X'):
         self.query = 'stocktwits_' + query
         
@@ -183,6 +186,7 @@ class get_tweets:
             panda_dict =  pd.DataFrame.from_dict(com_dict)   
             panda_dict['time'] = pd.to_datetime(panda_dict['time'])
             panda_dict.rename(columns={'body': 'Tweets'}, inplace=True)
+            panda_dict.rename(columns={'id': 'ID'}, inplace=True)
             ## extract sentiment
             tlen = pd.Series(data=panda_dict['basic_sentiment'].values, index=panda_dict['time'])
             bull = tlen.loc[tlen[:].isin(['Bullish'])]
@@ -199,75 +203,103 @@ class get_tweets:
             self.save_tweets_to_csv()  
             
             data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)    
-            print ("---------------Data fetching completed!-------------------------") 
-            print ("---------------Data set shape: "+ str(data.shape)+ " ----------------------") 
+            print ("---------------Data fetching completed!--------") 
+            print ("---------------Data set shape: "+ str(data.shape)+ " --------") 
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
+
         except:
             print("API rate limit reached!")
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
-            
-            
 
         
-        
-        
+    def encode_pandas_read(self,pathcsv):
+        try: 
+            table=pd.read_csv(pathcsv,index_col=None)
+            print('table=pd.read_csv(pathcsv,index_col=None)')
+        except:
+            try: 
+                table=pd.read_csv(pathcsv,sep=';',index_col=None)
+                print('table=pd.read_csv(pathcsv,sep=;,index_col=None)')
+            except:
+                try:
+                    table=pd.read_csv(pathcsv,sep='\t',index_col=None)
+                    print('table=pd.read_csv(pathcsv,sep=\t,index_col=None)')
+                except:
+                    try: 
+                        table=pd.read_csv(pathcsv,encoding='utf-8',index_col=None)
+                        print('table=pd.read_csv(pathcsv,encoding=utf-8,index_col=None)')
+                    except:
+                        try: 
+                            table=pd.read_csv(pathcsv,encoding='utf-8',sep=';',index_col=None)
+                            print('table=pd.read_csv(pathcsv,encoding=utf-8,sep=;,index_col=None)')
+                        except:
+                            try: 
+                                table=pd.read_csv(pathcsv,encoding='utf-8',sep='\t',index_col=None)
+                                print('table=pd.read_csv(pathcsv,encoding=utf-8,sep=\t,index_col=None)')
+                                
+                            except:
+                                try:
+                                    table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep=";",index_col=None)
+                                    print('table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep=";",index_col=None)')
+                                except:
+                                    try: 
+                                        table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep=";",index_col=None)
+                                        print('table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep=";",index_col=None)')
+                                    
+                                    except: 
+                                        table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep="\t",index_col=None)
+                                        print('table=pd.read_csv(pathcsv,encoding = "ISO-8859-1", sep="\t",index_col=None)')
+        return table                             
+
     def save_tweets_to_csv(self):
         # Open/Create a file to append data
         if os.path.exists(self.datPath+'tweets_'+self.query+'.csv'):
             
             
-            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding='ISO-8859-1', index_col=None)
+            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
             print("Data set before cleaning & merging: " + str(read_data.shape)) 
             ## Scan and remove duplicates
        
-            new_data = self.data.drop_duplicates("id", keep ='first')
+            new_data = self.data.drop_duplicates("ID")
             print("Removed " + str(len(self.data["Tweets"]) - len(new_data["Tweets"])) + " dupclicates!")
             ## 
             added = []
             for index, row in new_data.iterrows():
                
-               bool_array = read_data['id'].isin([row['id']])  
+               bool_array = read_data['ID'].isin([row['ID']])  
                if np.count_nonzero(bool_array) is 0:
                    added.append(row)
-                   print('------------------------------------------------')
-                   print('Append ' + str(row) + ' to csv file...')
-                   print('------------------------------------------------')
-                   print("\n")
-                   print("\n")
+#                   print('------------------------------------------------')
+#                   print('Append ' + str(row) + ' to csv file...')
+#                   print('------------------------------------------------')
+#                   print("\n")
+#                   print("\n")
                    
                    
             panda_dict =  pd.DataFrame.from_dict(added)   
-            with open(self.datPath+'tweets_'+self.query+'.csv', 'a') as f:
+            with open(self.datPath+'tweets_'+self.query+'.csv', 'a', encoding= self.encoding) as f:
                
-               panda_dict.to_csv(f, header=False ,encoding="utf-8",index=False)
+               panda_dict.to_csv(f, header=False ,encoding= 'utf-8' ,index=False)
                print('Done.')
                print('------------------------------------------------')
          
-            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)
+            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
 
             print (str(len(added)) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
             print("Size of new data set: " + str(len(read_data))) 
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
-            print("\n")
-            print("\n")
+
+
             
         else:      
             #Use csv Writer
-            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding="utf-8",index=False)
+            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding ,index=False)
             print("New csv created!")
             print (str(self.data.shape[0]) + " tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.csv')
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
-            print("\n")
-            print("\n")
+
+
             
             
     def save_tweets_to_hdf(self, day):
@@ -277,7 +309,7 @@ class get_tweets:
             print (str(self.data.shape[0]) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.h5' "// !")
         else:      
             #Use hdf Writer
-            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day)
+            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day, format = 'table')
             print("New hdf5 created!")
             print (str(self.data.shape[0]) + "tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.h5')       
@@ -285,55 +317,39 @@ class get_tweets:
             
             
             
-    def clean_data_from_csv(self, query):
+    def read_and_clean_data_from_csv(self, query):    
         self.query = query
-        data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)
+        data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding=self.encoding, index_col=None)
         print("Data set before cleaning: " + str(data.shape)) 
         ## Scan and remove duplicates
        # data_new = data.drop("Unnamed: 0")
-        new_data = data.drop_duplicates("id", keep ='first')
-       # new_data = new_data.dropna(axis=0, how='any', thresh = 3,  subset=None, inplace=False)
+        new_data = data.drop_duplicates("ID")
         print("New data set: " + str(new_data.shape))   
         print("Removed " + str(len(new_data["Tweets"]) - len(data["Tweets"])) + " dupclicates!")
+        print('------------------------------------------------')        
         
-        
-        new_data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding="utf-8", index=False)
+        new_data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding, index=False)
         
         
         return new_data
         
-                
-def main():                
-    ### init 
-    get_tweet_data = get_tweets()
+
+if __name__ == "__main__":
+    get_tweet_data = get_tweets(
+                 folder='TweetDat_debug/',
+                 consumer_key = 'edxIg10mLXYvXfFy6YcL9Ljlf',
+                 consumer_secret= 'a6ulFtT7UAKxRfrqPb4KKklhTtaeBhpjXFsiz31WnfmAHAxLut',
+                 access_token='55509426-JHSDeISdoOgc3GZfLmOhJix9gGB9yKexccVKuA38X',
+                 access_token_secret='crlpWSek13UjtDM6HMqwuJyGMPXbvy1MkQo6bssU0n0JN')
+    
     ### fetch data based on query word
     get_tweet_data.fetch_stocktwits(query='BTC.X')
     ### delete duplicates data from CSV
-  #  get_tweet_data.clean_data_from_csv(query='stocktwits_BTC.X')                 
-     
- #   get_tweet_data.save_tweets_to_hdf('test')
+    data = get_tweet_data.read_and_clean_data_from_csv(query='stocktwits_BTC.X')  
+    
+    get_tweet_data.save_tweets_to_hdf('test')
+    
 
-
-import time
-if __name__ == "__main__":
-    loop = True  
-    while loop:
-
-        try:
-            print("Start main()..")
-            print (time.strftime("%H:%M:%S"))
-            main()
-            
-            print("\n")
-            print("Waiting...")
-            print (time.strftime("%H:%M:%S"))
-            print("\n")
-            print("\n")
-            time.sleep(30)
-        except KeyboardInterrupt:
-            print (time.strftime("%H:%M:%S"))
-            confirm = input('Enter "yes" to cancel or "no" to keep running [yes/no]:').strip().lower()
-            if confirm == 'yes':
-                loop = False
-            else:
-                loop = True
+        
+        
+  
