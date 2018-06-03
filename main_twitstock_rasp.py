@@ -33,7 +33,10 @@ if __name__ == "__main__":
         try:
             print("Start main()..")
             print (time.strftime("%H:%M:%S"))
-            main()
+            try:
+                main()
+            except:
+                print("ERROR: main()")
             
             print("\n")
             print("Waiting...")
