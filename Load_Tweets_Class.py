@@ -9,7 +9,7 @@ import tweepy
 
 import pandas as pd
 import numpy as np
-from textblob import TextBlob
+#from textblob import TextBlob
 import api as twitapi
 import os
 import time  
@@ -18,6 +18,7 @@ import dateutil.parser
 class get_tweets:
     
     def __init__(self, 
+                 folder='TweetDat/',
                  consumer_key = 'edxIg10mLXYvXfFy6YcL9Ljlf',
                  consumer_secret= 'a6ulFtT7UAKxRfrqPb4KKklhTtaeBhpjXFsiz31WnfmAHAxLut',
                  access_token='55509426-JHSDeISdoOgc3GZfLmOhJix9gGB9yKexccVKuA38X',
@@ -28,7 +29,7 @@ class get_tweets:
         self.auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         self.auth.set_access_token(access_token, access_token_secret)
         #Path to store cached currency data
-        self.datPath = 'TweetDat/'
+        self.datPath = folder
         if not os.path.exists(self.datPath):
             os.mkdir(self.datPath)
         self.query = None    
@@ -98,11 +99,12 @@ class get_tweets:
                         
         except:
             print("API rate limit reached!")  
-#        try:
-#            
-#        except:
-#            print('ERROR while saving data')
-        self.save_tweets_to_csv()
+        try:
+           self.save_tweets_to_csv()
+            
+        except:
+            print('ERROR while saving data')
+        
         data = pd.read_csv(self.datPath+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None)    
         print ("---------------Data fetching completed!-------------------------") 
         print ("---------------Data set shape: "+ str(data.shape)+ " ----------------------") 
@@ -201,16 +203,14 @@ class get_tweets:
             self.save_tweets_to_csv()  
             
             data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)    
-            print ("---------------Data fetching completed!-------------------------") 
-            print ("---------------Data set shape: "+ str(data.shape)+ " ----------------------") 
+            print ("---------------Data fetching completed!--------") 
+            print ("---------------Data set shape: "+ str(data.shape)+ " --------") 
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
+
         except:
             print("API rate limit reached!")
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')    
+
         
     def encode_pandas_read(self,pathcsv):
         try: 
@@ -260,7 +260,7 @@ class get_tweets:
             print("Data set before cleaning & merging: " + str(read_data.shape)) 
             ## Scan and remove duplicates
        
-            new_data = self.data.drop_duplicates("ID", keep ='first')
+            new_data = self.data.drop_duplicates("ID")
             print("Removed " + str(len(self.data["Tweets"]) - len(new_data["Tweets"])) + " dupclicates!")
             ## 
             added = []
@@ -288,9 +288,7 @@ class get_tweets:
             print (str(len(added)) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
             print("Size of new data set: " + str(len(read_data))) 
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
-            print("\n")
+
 
             
         else:      
@@ -300,8 +298,7 @@ class get_tweets:
             print (str(self.data.shape[0]) + " tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.csv')
             print('------------------------------------------------')
-            print('------------------------------------------------')
-            print('------------------------------------------------')
+
 
             
             
@@ -312,7 +309,7 @@ class get_tweets:
             print (str(self.data.shape[0]) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.h5' "// !")
         else:      
             #Use hdf Writer
-            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day)
+            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day, format = 'table')
             print("New hdf5 created!")
             print (str(self.data.shape[0]) + "tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.h5')       
@@ -326,10 +323,10 @@ class get_tweets:
         print("Data set before cleaning: " + str(data.shape)) 
         ## Scan and remove duplicates
        # data_new = data.drop("Unnamed: 0")
-        new_data = data.drop_duplicates("ID", keep = 'first')
+        new_data = data.drop_duplicates("ID")
         print("New data set: " + str(new_data.shape))   
         print("Removed " + str(len(new_data["Tweets"]) - len(data["Tweets"])) + " dupclicates!")
-        
+        print('------------------------------------------------')        
         
         new_data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding, index=False)
         
@@ -337,7 +334,20 @@ class get_tweets:
         return new_data
         
 
-  
+if __name__ == "__main__":
+    get_tweet_data = get_tweets(
+                 folder='TweetDat_debug/',
+                 consumer_key = 'edxIg10mLXYvXfFy6YcL9Ljlf',
+                 consumer_secret= 'a6ulFtT7UAKxRfrqPb4KKklhTtaeBhpjXFsiz31WnfmAHAxLut',
+                 access_token='55509426-JHSDeISdoOgc3GZfLmOhJix9gGB9yKexccVKuA38X',
+                 access_token_secret='crlpWSek13UjtDM6HMqwuJyGMPXbvy1MkQo6bssU0n0JN')
+    
+    ### fetch data based on query word
+    get_tweet_data.fetch_stocktwits(query='BTC.X')
+    ### delete duplicates data from CSV
+    data = get_tweet_data.read_and_clean_data_from_csv(query='stocktwits_BTC.X')  
+    
+    get_tweet_data.save_tweets_to_hdf('test')
     
 
         

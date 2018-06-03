@@ -12,6 +12,7 @@ import time
 def main():                
     ### init 
     get_tweet_data = Load_Tweets_Class.get_tweets(
+                 folder='TweetDat/',
                  consumer_key = 'edxIg10mLXYvXfFy6YcL9Ljlf',
                  consumer_secret= 'a6ulFtT7UAKxRfrqPb4KKklhTtaeBhpjXFsiz31WnfmAHAxLut',
                  access_token='55509426-JHSDeISdoOgc3GZfLmOhJix9gGB9yKexccVKuA38X',
