@@ -32,7 +32,7 @@ class get_tweets:
         self.auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         self.auth.set_access_token(access_token, access_token_secret)
         #Path to store cached currency data
-        self.datPath = '\\\\192.168.0.25\\SambaPi\\TweetDat_backup\\'
+        self.datPath = '\\\\192.168.0.25\\SambaPi\\raspi_tweet_fetcher\\TweetDat_backup\\'
         if not os.path.exists(self.datPath):
             os.mkdir(self.datPath)
         self.query = None    

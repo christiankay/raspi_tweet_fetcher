@@ -20,7 +20,7 @@ def main():
                  access_token_secret='crlpWSek13UjtDM6HMqwuJyGMPXbvy1MkQo6bssU0n0JN')
     
     ### fetch data based on query word
-    get_Twitter_data.fetch_tweets(query='BITCOIN', count=100, pages=20)
+    get_Twitter_data.fetch_tweets(query='BITCOIN', count=100, pages=12)
     
 
     data = get_Twitter_data.data
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             There are two initial buckets available for GET requests: 15 calls every 15 minutes, and 180 calls every 15 minutes.
             '''
             
-            time.sleep(60*15+10)
+            time.sleep(60*1+1) ## per minute
         except KeyboardInterrupt:
             print (time.strftime("%H:%M:%S"))
             confirm = input('Enter "yes" to cancel or "no" to keep running [yes/no]:').strip().lower()
