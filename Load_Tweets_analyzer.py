@@ -32,11 +32,12 @@ class get_tweets:
         self.auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
         self.auth.set_access_token(access_token, access_token_secret)
         #Path to store cached currency data
-        self.datPath = '\\\\192.168.0.24\\SambaPi\\raspi_tweet_fetcher\\\TweetDat_backup\\'
+        self.datPath = '\\\\192.168.0.25\\SambaPi\\raspi_tweet_fetcher\\\TweetDat_backup\\'
         if not os.path.exists(self.datPath):
             os.mkdir(self.datPath)
         self.query = None    
         self.data = None
+        self.encoding = 'utf-8'#"ISO-8859-1"
 
     def fetch_tweets(self, query='BITCOIN' , count = 100, pages = 1):
         
@@ -197,14 +198,52 @@ class get_tweets:
     def save_tweets_to_csv(self):
         # Open/Create a file to append data
         if os.path.exists(self.datPath+'tweets_'+self.query+'.csv'):
-            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', mode = 'a', encoding='utf-8',index=False, header = None)
-            print (str(self.data.shape[0]) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
+            
+            
+            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
+            print("Data set before cleaning & merging: " + str(read_data.shape)) 
+            ## Scan and remove duplicates
+       
+            new_data = self.data.drop_duplicates("ID")
+            print("Removed " + str(len(self.data["Tweets"]) - len(new_data["Tweets"])) + " dupclicates!")
+            ## 
+            added = []
+            for index, row in new_data.iterrows():
+               
+               bool_array = read_data['ID'].isin([row['ID']])  
+               if np.count_nonzero(bool_array) is 0:
+                   added.append(row)
+#                   print('------------------------------------------------')
+#                   print('Append ' + str(row) + ' to csv file...')
+#                   print('------------------------------------------------')
+#                   print("\n")
+#                   print("\n")
+                   
+                   
+            panda_dict =  pd.DataFrame.from_dict(added)   
+            with open(self.datPath+'tweets_'+self.query+'.csv', 'a', encoding= self.encoding) as f:
+               
+               panda_dict.to_csv(f, header=False ,encoding= 'utf-8' ,index=False)
+               print('Done.')
+               print('------------------------------------------------')
+         
+            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
+
+            print (str(len(added)) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
+            print("Size of new data set: " + str(len(read_data))) 
+            print('------------------------------------------------')
+
+
+            
         else:      
             #Use csv Writer
-            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding='utf-8',index=False)
+            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding ,index=False)
             print("New csv created!")
-            print (str(self.data.shape[0]) + "tweets successfully saved!")
+            print (str(self.data.shape[0]) + " tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.csv')
+            print('------------------------------------------------')
+
+
             
             
     def save_tweets_to_hdf(self, day):
@@ -214,7 +253,7 @@ class get_tweets:
             print (str(self.data.shape[0]) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.h5' "// !")
         else:      
             #Use hdf Writer
-            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day)
+            self.data.to_hdf(self.datPath+'tweets_'+self.query+'.h5',key=day, format = 'table')
             print("New hdf5 created!")
             print (str(self.data.shape[0]) + "tweets successfully saved!")
             print ("Path: " + self.datPath+'tweets_'+self.query+'.h5')       
@@ -222,22 +261,22 @@ class get_tweets:
             
             
             
-    def clean_data_from_csv(self, query):
+    def read_and_clean_data_from_csv(self, query):    
         self.query = query
-        data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding='utf-8', index_col=None)
+        data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding=self.encoding, index_col=None)
         print("Data set before cleaning: " + str(data.shape)) 
         ## Scan and remove duplicates
        # data_new = data.drop("Unnamed: 0")
-        new_data = data.drop_duplicates("Tweets", keep ='first')
-        new_data = new_data.dropna(axis=0, how='any',  subset=None, inplace=False)
-        print("New data set: " + str(new_data.shape))   
-        print("Removed " + str(len(new_data["Tweets"]) - len(data["Tweets"])) + " dupclicates!")
+        new_data = data.drop_duplicates("ID")
+        new_data2 = new_data.dropna(subset = ['Date', 'Tweets'])
+        print("New data set: " + str(new_data2.shape))   
+        print("Removed " + str(len(new_data2["Tweets"]) - len(data["Tweets"])) + " dupclicates!")
+        print('------------------------------------------------')        
+        
+        new_data2.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding, index=False)
         
         
-        new_data.to_csv(self.datPath+'tweets_'+query+'.csv', encoding='utf-8', index=False)
-        
-        
-        return new_data
+        return new_data2
         
                 
                 
@@ -252,7 +291,7 @@ get_tweet_data = get_tweets()
 
 #get_tweet_data.fetch_stocktwits(query='BTC.X')
 ### delete duplicates data from CSV
-data = get_tweet_data.clean_data_from_csv(query='stocktwits_BTC.X')
+data = get_tweet_data.read_and_clean_data_from_csv(query='BITCOIN')
 #data = get_tweet_data.data
 
 
@@ -330,8 +369,9 @@ def analize_sentiment(tweet):
     else:
         return -1
     
-    
+
 # We create a column with the result of the analysis:
+data = data.dropna()  
 data['SA'] = np.array([ analize_sentiment(tweet) for tweet in data['Tweets'] ])
 
 
@@ -418,4 +458,29 @@ results.to_csv('test_H.csv')
 #
 #print("Percentage of positive tweets: {}%".format(len(pos_tweets)*100/len(data['Tweets'])))
 #print("Percentage of neutral tweets: {}%".format(len(neu_tweets)*100/len(data['Tweets'])))
-#print("Percentage de negative tweets: {}%".format(len(neg_tweets)*100/len(data['Tweets'])))    
+#print("Percentage de negative tweets: {}%".format(len(neg_tweets)*100/len(data['Tweets'])))  
+
+    
+results['Date'] = pd.to_datetime(results['days'], errors = 'coerce')
+
+data_frame_res = pd.DataFrame( index=results['Date'])
+#data_frame_res = data_frame_res.drop('days', axis=1)
+for col in list(results):
+    
+    
+    data_frame_res[col] = pd.Series(data=results[col].values, index=results['Date'])
+
+
+#bull = tlen.loc[tlen[:].isin(['Bullish'])]
+#bear = tlen.loc[tlen[:].isin(['Bearish'])]
+#bb = bull.append(bear)
+#res4 = bb.str.contains('Bullish', na=False, regex=True).astype(int)
+#
+     
+#results.plot()
+    
+#AO['1980-05':'1981-03'].plot()   
+data_frame_res.plot(subplots=True) 
+data_frame_res.plot(subplots=False) 
+AO_mm = data_frame_res.resample("H").mean()
+AO_mm.plot(style='g--') 
