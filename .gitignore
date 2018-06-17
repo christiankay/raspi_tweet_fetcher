@@ -6,3 +6,5 @@ __pycache__/
 TweetDat_backup/
 
 test_H\.csv
+
+TweetDat_debug/

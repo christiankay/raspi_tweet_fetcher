@@ -438,10 +438,10 @@ class get_tweets:
 
 if __name__ == "__main__":
     
-    import Load_Tweet_Class as LTC    
-        
+    import Load_Tweets_Class as LTC    
+      
            ### init 
-    get_tweet_data = LTC()
+    get_tweet_data = LTC.get_tweets()
     ### fetch data based on query word
     #get_tweet_data.fetch_tweets(query='BITCOIN', count=100, pages=1)
     

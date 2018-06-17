@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 #from textblob import TextBlob
 import api as twitapi
+import re
 import os
 import time  
 import dateutil.parser
@@ -430,10 +431,10 @@ class get_tweets:
         ### split into day and save to hdf
         for day, group in tsa_group:
            liste[day] = group
-           get_tweet_data.data = group
-           get_tweet_data.save_tweets_to_hdf(str(day))
-           print ("Day: " + str(day))
-           print ("Number of entries: " , len(liste[day]))
+#           get_tweet_data.data = group
+#           get_tweet_data.save_tweets_to_hdf(str(day))
+#           print ("Day: " + str(day))
+#           print ("Number of entries: " , len(liste[day]))
            
            
         
