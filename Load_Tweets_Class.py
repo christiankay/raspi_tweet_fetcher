@@ -333,6 +333,160 @@ class get_tweets:
         
         return new_data
         
+    def analyze_Tweets(self, data):
+    
+        
+        from textblob import TextBlob
+        
+        # We extract the tweet with more FAVs and more RTs:
+        
+        fav_max = np.max(data['Likes'])
+        rt_max  = np.max(data['RTs'])
+        
+        fav = data[data.Likes == fav_max].index[0]
+        rt  = data[data.RTs == rt_max].index[0]
+        
+        # Max FAVs:
+        print ("------------------------------------------------------------")
+        print("The tweet with more likes is: \n{}".format(data['Tweets'][fav]))
+        print("Number of likes: {}".format(fav_max))
+        print("{} characters.\n".format(data['len'][fav]))
+        print ("------------------------------------------------------------")
+        
+        # Max RTs:
+        print ("------------------------------------------------------------")
+        print("The tweet with more retweets is: \n{}".format(data['Tweets'][rt]))
+        print("Number of retweets: {}".format(rt_max))
+        print("{} characters.\n".format(data['len'][rt]))
+        print ("------------------------------------------------------------")
+        
+        #####
+        # We extract the mean of lenghts:
+        
+        mean = np.mean(data['len'])
+        print ("------------------------------------------------------------")
+        print("The lenght's average in tweets: {}".format(mean))
+        print ("------------------------------------------------------------")
+        
+        
+        
+        # We create time series for data:
+        data['Date'] = pd.to_datetime(data['Date'], errors = 'coerce')
+        
+        tlen = pd.Series(data=data['len'].values, index=data['Date'])
+        tfav = pd.Series(data=data['Likes'].values, index=data['Date'])
+        tret = pd.Series(data=data['RTs'].values, index=data['Date']) 
+        
+        
+        # Lenghts along time:
+        #tret.plot(figsize=(16,4), color='r');
+        #tlen.plot(figsize=(16,4), color='b');
+        
+        
+        
+        
+        
+        def clean_tweet(tweet):
+            '''
+            Utility function to clean the text in a tweet by removing 
+            links and special characters using regex.
+            '''
+            
+            if type(tweet) != str:
+                print ('No string', tweet)
+            return ' '.join(re.sub("(@[A-Za-z0-9]+)|([^0-9A-Za-z \t])|(\w+:\/\/\S+)", " ", tweet).split())
+        
+        def analize_sentiment(tweet):
+            '''
+            Utility function to classify the polarity of a tweet
+            using textblob.
+            '''
+            analysis = TextBlob(clean_tweet(tweet))
+            if analysis.sentiment.polarity > 0:
+                return 1
+            elif analysis.sentiment.polarity == 0:
+                return 0
+            else:
+                return -1
+            
+        
+        # We create a column with the result of the analysis:
+        data = data.dropna()  
+        data['SA'] = np.array([ analize_sentiment(tweet) for tweet in data['Tweets'] ])
+        
+        
+        
+        
+        
+        tsa = pd.Series(data=data['SA'].values, index=data['Date']) 
+        tsa_group =  tsa.groupby(pd.Grouper(freq="H"))  
+        liste = {}
+        
+        
+        
+        days = [day for day, group in tsa_group]
+        print("Amount of days in data set: ", len(days))
+        
+        ### split into day and save to hdf
+        for day, group in tsa_group:
+           liste[day] = group
+           get_tweet_data.data = group
+           get_tweet_data.save_tweets_to_hdf(str(day))
+           print ("Day: " + str(day))
+           print ("Number of entries: " , len(liste[day]))
+           
+           
+        
+        
+        
+        pos_res = []
+        neut_res = []
+        neg_res =[]
+        days =[]
+        len_day_data =[]
+        for day, day_data in liste.items():
+            
+        #    pos_tweets = [day_data[index] for index in day_data if day_data[index] > 0]
+        #    neu_tweets = [day_data[index] for index in day_data if day_data[index] == 0]
+        #    neg_tweets = [day_data[index] for index in day_data if day_data[index] < 0]
+            
+        
+            neg_tweets = []
+            neu_tweets = []
+            pos_tweets = []
+            for i in day_data:
+             #print(i)
+             if i < 0:
+            
+                 neg_tweets.append(i)
+             elif i == 0:
+                 neu_tweets.append(i)
+             elif i > 0:
+                 pos_tweets.append(i)
+                 
+            try:    
+                     # We print percentages:
+                print("Day: ", day)
+                print("Percentage of positive tweets: {}%".format(len(pos_tweets)*100/len(day_data)))
+                print("Percentage of neutral tweets: {}%".format(len(neu_tweets)*100/len(day_data)))
+                print("Percentage de negative tweets: {}%".format(len(neg_tweets)*100/len(day_data)))   
+                pos_res.append(len(pos_tweets)*100/len(day_data)) 
+                neut_res.append(len(neu_tweets)*100/len(day_data))
+                neg_res.append(len(neg_tweets)*100/len(day_data))
+                len_day_data.append(len(day_data))
+                days.append(day)    
+            except:
+                print("day data issue")
+        results = pd.DataFrame({'pos_tweet' : pos_res, 
+                                'neut_tweet': neut_res, 
+                                'neg_res' : neg_res, 
+                                'days' : days,
+                                'len_day_data' : len_day_data})
+                    
+                    
+        return results                
+
+
 
 if __name__ == "__main__":
     get_tweet_data = get_tweets(
