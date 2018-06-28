@@ -427,7 +427,7 @@ class get_tweets:
         
         
         tsa = pd.Series(data=data['SA'].values, index=data['Date']) 
-        tsa_group =  tsa.groupby(pd.Grouper(freq="H"))  
+        tsa_group =  tsa.groupby(pd.Grouper(freq="900s"))  
         liste = {}
         
         
@@ -491,7 +491,7 @@ class get_tweets:
                                 'days' : days,
                                 'len_day_data' : len_day_data})
                     
-                    
+        results.to_csv('CurDat/temp_results.csv')            
         return results                
 
 
