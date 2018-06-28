@@ -36,6 +36,7 @@ class get_tweets:
         self.query = None    
         self.data = None
         self.encoding = 'utf-8'#"ISO-8859-1"
+        self.csv_mem = None
 
     def fetch_tweets(self, query='BITCOIN' , count = 200, pages = 200):
         
@@ -100,17 +101,23 @@ class get_tweets:
                         
         except:
             print("API rate limit reached!")  
+            
+            
+        
+        if self.csv_mem is None:
+            self.csv_mem = pd.read_csv(self.datPath+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
+        
         try:
+             
            self.save_tweets_to_csv()
             
         except:
             print('ERROR while saving data')
-        
-        data = pd.read_csv(self.datPath+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None)    
+            
+   
+            
         print ("---------------Data fetching completed!-------------------------") 
-        print ("---------------Data set shape: "+ str(data.shape)+ " ----------------------") 
-        
-        
+        print ("---------------Data set shape: "+ str(self.csv_mem .shape)+ " ----------------------")    
     def fetch_stocktwits(self, query='BTC.X'):
         self.query = 'stocktwits_' + query
         
@@ -257,7 +264,7 @@ class get_tweets:
         if os.path.exists(self.datPath+'tweets_'+self.query+'.csv'):
             
             
-            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
+            read_data = self.csv_mem# pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
             print("Data set before cleaning & merging: " + str(read_data.shape)) 
             ## Scan and remove duplicates
        
@@ -284,10 +291,10 @@ class get_tweets:
                print('Done.')
                print('------------------------------------------------')
          
-            read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
-
+            #read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
+            self.csv_mem = self.csv_mem.append(panda_dict, ignore_index=True)
             print (str(len(added)) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
-            print("Size of new data set: " + str(len(read_data))) 
+            print("Size of new data set: " + str(len(self.csv_mem))) 
             print('------------------------------------------------')
 
 
