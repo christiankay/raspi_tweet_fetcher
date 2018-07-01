@@ -15,6 +15,7 @@ import re
 import os
 import time  
 import dateutil.parser
+from datetime import datetime
 
 class get_tweets:
     
@@ -37,6 +38,7 @@ class get_tweets:
         self.data = None
         self.encoding = 'utf-8'#"ISO-8859-1"
         self.csv_mem = None
+        self.day = None
 
     def fetch_tweets(self, query='BITCOIN' , count = 200, pages = 200):
         
@@ -261,11 +263,19 @@ class get_tweets:
 
     def save_tweets_to_csv(self):
         # Open/Create a file to append data
-        if os.path.exists(self.datPath+'tweets_'+self.query+'.csv'):
+        
+        
+        self.day = datetime.utcnow().strftime("%Y%m%d")
+        
+        
+        if os.path.exists(self.datPath+self.day+'tweets_'+self.query+'.csv'):
             
             
-            read_data = self.csv_mem# pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
-            print("Data set before cleaning & merging: " + str(read_data.shape)) 
+            read_data = self.csv_mem.drop_duplicates("ID")# pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
+            
+            
+            print("Removed " + str(len(self.csv_mem["Tweets"]) - len(read_data["Tweets"])) + " dupclicates!")
+            print("Clean data set before merging: " + str(read_data.shape)) 
             ## Scan and remove duplicates
        
             new_data = self.data.drop_duplicates("ID")
@@ -285,7 +295,7 @@ class get_tweets:
                    
                    
             panda_dict =  pd.DataFrame.from_dict(added)   
-            with open(self.datPath+'tweets_'+self.query+'.csv', 'a', encoding= self.encoding) as f:
+            with open(self.datPath+self.day+'tweets_'+self.query+'.csv', 'a', encoding= self.encoding) as f:
                
                panda_dict.to_csv(f, header=False ,encoding= 'utf-8' ,index=False)
                print('Done.')
@@ -293,7 +303,7 @@ class get_tweets:
          
             #read_data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
             self.csv_mem = self.csv_mem.append(panda_dict, ignore_index=True)
-            print (str(len(added)) + " tweets successfully added to //" + self.datPath+'tweets_'+self.query+'.csv' "// !")
+            print (str(len(added)) + " tweets successfully added to //" + self.datPath+self.day+'tweets_'+self.query+'.csv' "// !")
             print("Size of new data set: " + str(len(self.csv_mem))) 
             print('------------------------------------------------')
 
@@ -301,10 +311,10 @@ class get_tweets:
             
         else:      
             #Use csv Writer
-            self.data.to_csv(self.datPath+'tweets_'+self.query+'.csv', encoding=self.encoding ,index=False)
+            self.data.to_csv(self.datPath+self.day+'tweets_'+self.query+'.csv', encoding=self.encoding ,index=False)
             print("New csv created!")
             print (str(self.data.shape[0]) + " tweets successfully saved!")
-            print ("Path: " + self.datPath+'tweets_'+self.query+'.csv')
+            print ("Path: " + self.datPath+self.day+'tweets_'+self.query+'.csv')
             print('------------------------------------------------')
 
 
