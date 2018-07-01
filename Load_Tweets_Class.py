@@ -382,22 +382,22 @@ class get_tweets:
         print("{} characters.\n".format(data['len'][rt]))
         print ("------------------------------------------------------------")
         
-        #####
-        # We extract the mean of lenghts:
+#        #####
+#        # We extract the mean of lenghts:
+#        
+#        mean = np.mean(data['len'])
+#        print ("------------------------------------------------------------")
+#        print("The lenght's average in tweets: {}".format(mean))
+#        print ("------------------------------------------------------------")
         
-        mean = np.mean(data['len'])
-        print ("------------------------------------------------------------")
-        print("The lenght's average in tweets: {}".format(mean))
-        print ("------------------------------------------------------------")
-        
-        
+        print("Start analyzing tweets..")
         
         # We create time series for data:
         data['Date'] = pd.to_datetime(data['Date'], errors = 'coerce')
         
-        tlen = pd.Series(data=data['len'].values, index=data['Date'])
-        tfav = pd.Series(data=data['Likes'].values, index=data['Date'])
-        tret = pd.Series(data=data['RTs'].values, index=data['Date']) 
+#        tlen = pd.Series(data=data['len'].values, index=data['Date'])
+#        tfav = pd.Series(data=data['Likes'].values, index=data['Date'])
+#        tret = pd.Series(data=data['RTs'].values, index=data['Date']) 
         
         
         # Lenghts along time:
@@ -424,12 +424,12 @@ class get_tweets:
             using textblob.
             '''
             analysis = TextBlob(clean_tweet(tweet))
-            if analysis.sentiment.polarity > 0:
+            if analysis.sentiment.polarity > 0.1:
                 return 1
-            elif analysis.sentiment.polarity == 0:
-                return 0
-            else:
+            elif analysis.sentiment.polarity < -0.1:
                 return -1
+            else:
+                return 0
             
         
         # We create a column with the result of the analysis:
@@ -437,7 +437,7 @@ class get_tweets:
         data['SA'] = np.array([ analize_sentiment(tweet) for tweet in data['Tweets'] ])
         
         
-        
+        print("Done.")
         
         
         tsa = pd.Series(data=data['SA'].values, index=data['Date']) 
@@ -505,7 +505,7 @@ class get_tweets:
                                 'days' : days,
                                 'len_day_data' : len_day_data})
                     
-        results.to_csv('CurDat/temp_results.csv')            
+       # results.to_csv('CurDat/temp_results.csv')            
         return results                
 
 
