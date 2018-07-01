@@ -38,7 +38,7 @@ class get_tweets:
         self.data = None
         self.encoding = 'utf-8'#"ISO-8859-1"
         self.csv_mem = None
-        self.day = None
+        self.day = datetime.utcnow().strftime("%Y%m%d") + '_'
 
     def fetch_tweets(self, query='BITCOIN' , count = 200, pages = 200):
         
@@ -107,7 +107,7 @@ class get_tweets:
             
         
         if self.csv_mem is None:
-            self.csv_mem = pd.read_csv(self.datPath+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
+            self.csv_mem = pd.read_csv(self.datPath+self.day+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
         
         try:
              
@@ -265,7 +265,7 @@ class get_tweets:
         # Open/Create a file to append data
         
         
-        self.day = datetime.utcnow().strftime("%Y%m%d")
+        self.day = datetime.utcnow().strftime("%Y%m%d") + '_'
         
         
         if os.path.exists(self.datPath+self.day+'tweets_'+self.query+'.csv'):
