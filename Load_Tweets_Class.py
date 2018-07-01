@@ -278,12 +278,12 @@ class get_tweets:
             read_data = self.csv_mem.drop_duplicates("ID")# pd.read_csv(self.datPath+'tweets_'+self.query+'.csv', encoding = self.encoding, index_col=None)
             
             
-            print("Removed " + str(len(self.csv_mem["Tweets"]) - len(read_data["Tweets"])) + " dupclicates!")
+            print("Removed " + str(len(self.csv_mem["Tweets"]) - len(read_data["Tweets"])) + " dupclicates from current data set!")
             print("Clean data set before merging: " + str(read_data.shape)) 
             ## Scan and remove duplicates
        
             new_data = self.data.drop_duplicates("ID")
-            print("Removed " + str(len(self.data["Tweets"]) - len(new_data["Tweets"])) + " dupclicates!")
+            print("Removed " + str(len(self.data["Tweets"]) - len(new_data["Tweets"])) + " dupclicates from new data!")
             ## 
             added = []
             for index, row in new_data.iterrows():
