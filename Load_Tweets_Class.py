@@ -214,18 +214,32 @@ class get_tweets:
             
             
             self.data = panda_dict
-            self.save_tweets_to_csv()  
-            
-            data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding="utf-8", index_col=None)    
-            print ("---------------Data fetching completed!--------") 
-            print ("---------------Data set shape: "+ str(data.shape)+ " --------") 
-            print('------------------------------------------------')
+
 
         except:
             print("API rate limit reached!")
             print('------------------------------------------------')
+            
+            
 
-        
+        if self.csv_mem is None:
+            try:
+                self.csv_mem = pd.read_csv(self.datPath+self.day+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
+            except:
+                self.csv_mem = self.data
+                print('ERROR while reading csv into memory')
+                
+        try:
+             
+           self.save_tweets_to_csv()
+            
+        except:
+            print('ERROR while saving data')
+            
+   
+            
+        print ("---------------Data fetching completed!-------------------------") 
+        print ("---------------Data set shape: "+ str(self.csv_mem .shape)+ " ----------------------")  
     def encode_pandas_read(self,pathcsv):
         try: 
             table=pd.read_csv(pathcsv,index_col=None)
@@ -339,14 +353,15 @@ class get_tweets:
             
             
             
-    def read_and_clean_data_from_csv(self, query):    
+    def read_and_clean_data_from_csv(self, query):   
+        print("Start reading and cleaning tweet data..") 
         self.query = query
         data = pd.read_csv(self.datPath+'tweets_'+self.query+'.csv',encoding=self.encoding, index_col=None)
-        print("Data set before cleaning: " + str(data.shape)) 
+        print("Tweet data set before cleaning: " + str(data.shape)) 
         ## Scan and remove duplicates
        # data_new = data.drop("Unnamed: 0")
         new_data = data.drop_duplicates("ID")
-        print("New data set: " + str(new_data.shape))   
+        print("New tweet data set: " + str(new_data.shape))   
         print("Removed " + str(len(new_data["Tweets"]) - len(data["Tweets"])) + " dupclicates!")
         print('------------------------------------------------')        
         
@@ -384,11 +399,11 @@ class get_tweets:
         
 #        #####
 #        # We extract the mean of lenghts:
-#        
-#        mean = np.mean(data['len'])
-#        print ("------------------------------------------------------------")
-#        print("The lenght's average in tweets: {}".format(mean))
-#        print ("------------------------------------------------------------")
+        
+        mean = np.mean(data['len'])
+        print ("------------------------------------------------------------")
+        print("The lenght's average in tweets: {}".format(mean))
+        print ("------------------------------------------------------------")
         
         print("Start analyzing tweets..")
         
@@ -433,9 +448,11 @@ class get_tweets:
             
         
         # We create a column with the result of the analysis:
-        data = data.dropna()  
-        data['SA'] = np.array([ analize_sentiment(tweet) for tweet in data['Tweets'] ])
-        
+        data_new  = data.dropna(subset=['Tweets', 'Date'])
+        print("Dropped NaN: " , len(data)-len(data_new))
+        data = data_new
+        data['SA'] = np.array([ analize_sentiment(tweet) for tweet in data['Tweets'] ]) 
+         
         
         print("Done.")
         
