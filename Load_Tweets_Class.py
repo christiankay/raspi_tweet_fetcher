@@ -108,7 +108,7 @@ class get_tweets:
         
         if self.csv_mem is None:
             try:
-                self.csv_mem = pd.read_csv(self.datPath+self.day+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
+                self.csv_mem = pd.read_csv(self.datPath+self.day+'tweets_stocktwits'+query+'.csv', encoding = self.encoding, index_col=None) 
             except:
                 self.csv_mem = self.data
                 print('ERROR while reading csv into memory')
@@ -224,6 +224,7 @@ class get_tweets:
 
         if self.csv_mem is None:
             try:
+                print('Try to read file..' , self.datPath+self.day+'tweets_'+query+'.csv')
                 self.csv_mem = pd.read_csv(self.datPath+self.day+'tweets_'+query+'.csv', encoding = self.encoding, index_col=None) 
             except:
                 self.csv_mem = self.data
