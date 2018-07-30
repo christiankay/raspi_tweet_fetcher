@@ -371,7 +371,7 @@ class get_tweets:
         
         return new_data
         
-    def analyze_Tweets(self, data):
+    def analyze_Tweets(self, data, period):
     
         
         from textblob import TextBlob
@@ -459,7 +459,7 @@ class get_tweets:
         
         
         tsa = pd.Series(data=data['SA'].values, index=data['Date']) 
-        tsa_group =  tsa.groupby(pd.Grouper(freq="900s"))  
+        tsa_group =  tsa.groupby(pd.Grouper(freq=str(period)+"s"))  
         liste = {}
         
         
