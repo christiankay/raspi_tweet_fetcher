@@ -21,7 +21,7 @@ def main():
     ### fetch data based on query word
     get_tweet_data.fetch_stocktwits(query='BTC.X')
     ### delete duplicates data from CSV
-    get_tweet_data.read_and_clean_data_from_csv(query='stocktwits_BTC.X')                 
+    #get_tweet_data.read_and_clean_data_from_csv(query='stocktwits_BTC.X')                 
      
    # get_tweet_data.save_tweets_to_hdf('test', format = 'table')
 
